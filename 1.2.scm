@@ -206,10 +206,7 @@
 (A 3 3)
 
 (A 2 (A 3 2))
-(A 2 (A 2 (A 3 1)))
-(A 2 (A 2 2))
-(A 2 (A 1 (A 2 1)))
-(A 2 (A 1 2))
+(A 2 (A 2 (A 3 1))) (A 2 (A 2 2)) (A 2 (A 1 (A 2 1))) (A 2 (A 1 2))
 ; The answer is 65536. Screw it.
 (define (f n) (A 0 n)) ; (* 2 n)
 (define (g n) (A 1 n)) ; (^ 2 n) where ^ is exponent
@@ -290,7 +287,7 @@
 ; took me to <C-k>i and type the sentence "1000 takes a bit."
 
 ;;;;;;;;;;;;;;;;;;;;
-; Exercise 1.12
+; Exercise 1.11
 ;;;;;;;;;;;;;;;;;;;
 ; f(n) = n if n < 3
 ; and
@@ -306,3 +303,118 @@
         (* 3
            (f (- n 3))))))
 ; (f 4) is immediate. (f 234) doesn't seem to return.
+
+
+; f(n) | n                                  if n <  3
+;      | f(n-1) + 2f(n-2) + 3f(n-3)         if n >= 3
+
+;Solution 1 (from wizardbook.wordpress.com):
+(define (f-iter a b c count)
+  (if (zero? count)
+      c
+      (f-iter b
+              c
+              (+ c (* 2 b) (* 3 a))
+              (dec count))))
+
+(define (f n)
+  (define (iter a b c count)
+    (if (= count 0)
+        a
+        (iter b c (+ c (* 2 b) (* 3 a)) (- count 1))))
+  (iter 0 1 2 n))
+
+(f 2)
+(iter 0 1 2 2)
+(iter 1 2 (+ 2 (* 2 1) (* 3 0)) (- 2 1))
+(iter 1 2 (+ 2 2 0) 1)
+(iter 1 2 4 1)
+(iter 2 4 (+ 4 (* 2 2) (* 3 2) (- 1 1)))
+(iter 2 4 (+ 4 4 6) 0)
+(iter 2 4 14 0)
+2
+
+; Oh holy crap. Duh. I'm thinking of (n-1), (n-2), and (n-3) as operations
+; instead of the preceding values.
+; f(n) | n                                  if n <  3
+;      | f(n-1) + 2f(n-2) + 3f(n-3)         if n >= 3
+
+(define (f n)
+  (define (iter a b c count)
+    (if (= count 0)
+        a
+        (iter b c (+ c (* 2 b) (* 3 a)) (- count 1))))
+  (iter 0 1 2 n))
+; Conceptually I am having a little bit of trouble with this. But I'm thinking
+; it is like this:
+; a = (n - 3)
+; b = (n - 2)
+; c = (n - 1)
+; count = n
+; To get to n, we initially define (n - 1), (n - 2), and (n - 3) as though n
+; were 2, since all n < 3 are simply n (so the sequence n < 3 is `0, 1, 2`).
+; Since n is simply n-1 to n+1, we can ladder our sequence up *to* n by
+; counting. This was throwing me for a loop initially. We always define the next
+; a in terms of f(n) for n >= 3. When count is 0, a is n, b is (n+1), and c is
+; (n+2).
+
+;;;;;;;;;;;;;;;;
+; Exercise 1.12
+;;;;;;;;;;;;;;;;
+; No friggin' clue.
+; Damn, the first solution is eminently simple and I should have thought about
+; it. I think the biggest problem I had in thinking of the solution as I thought
+; the point of the exercise was to compute every element in a row with one
+; method. Duh, no.
+
+(define (pascal r c)
+  (if (or (= c 1) (= c r))
+      1
+      (+ (pascal (- r 1) (- c 1)) (pascal (- r 1) c))))
+
+; Modified to error-catch
+(define (pascal r c)
+  (cond ((or (= c 1) (= c r)) 1)
+        ((> c r) -1)
+        ((< c 1) -1)
+        (else (+ (pascal (- r 1) (- c 1)) (pascal (- r 1) c)))))
+
+; I haven't written a proof in years, there is no way I'm going to try this.
+; I went back to wizardbook.wordpress.com and noticed the tagline:
+; "Is this a cdadr which I see before me?"
+; I know cdadr is some kind of complex recursive scheme function related to car
+; and cdr but, while I don't understand what it does yet, that is hilarious:
+; One of the greatest Macbeth sequences (which I should really put an effort to
+; memorizing):
+;
+; Is this a dagger which I see before me,
+; The handle toward my hand? Come, let me clutch thee.
+; I have thee not, and yet I see thee still.
+; Art thou not, fatal vision, sensible
+; To feeling as to sight? or art thou but
+; A dagger of the mind, a false creation,
+; Proceeding from the heat-oppressed brain?
+; I see thee yet, in form as palpable
+; As this which now I draw.
+; Thou marshall'st me the way that I was going;
+; And such an instrument I was to use.
+; Mine eyes are made the fools o' the other senses,
+; Or else worth all the rest; I see thee still,
+; And on thy blade and dudgeon gouts of blood,
+; Which was not so before. There's no such thing:
+; It is the bloody business which informs
+; Thus to mine eyes. Now o'er the one halfworld
+; Nature seems dead, and wicked dreams abuse
+; The curtain'd sleep; witchcraft celebrates
+; Pale Hecate's offerings, and wither'd murder,
+; Alarum'd by his sentinel, the wolf,
+; Whose howl's his watch, thus with his stealthy pace.
+; With Tarquin's ravishing strides, towards his design
+; Moves like a ghost. Thou sure and firm-set earth,
+; Hear not my steps, which way they walk, for fear
+; Thy very stones prate of my whereabout,
+; And take the present horror from the time,
+; Which now suits with it. Whiles I threat, he lives:
+; Words to the heat of deeds too cold breath gives.
+
+; I am starting §1.2.3 Orders of Growth but I'd rather work on my webapp.
